@@ -1,0 +1,36 @@
+CREATE DATABASE proj;
+\c proj;
+CREATE TABLE user(
+	id SERIAL PRIMARY KEY,
+	name VARCHAR(50) NOT NULL UNIQUE,
+    hash VARCHAR(60) NOT NULL UNIQUE
+);
+CREATE TABLE commander(
+	id SERIAL PRIMARY KEY,
+	commander VARCHAR(50) NOT NULL UNIQUE
+);
+CREATE TABLE partida(
+	id SERIAL PRIMARY KEY,
+    winner INT
+);
+CREATE TABLE user_commander (
+    id SERIAL PRIMARY KEY,                    
+    id_user INT NOT NULL,                   
+    id_commander INT NOT NULL,                   
+    id_partida INT NOT NULL,                   
+    
+    CONSTRAINT fk_users                   
+        FOREIGN KEY (id_user)         
+        REFERENCES user (id)         
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_commander         
+        FOREIGN KEY (id_commander)
+        REFERENCES commander (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_partida
+        FOREIGN KEY (id_partida)
+        REFERENCES partida (id)
+        ON DELETE CASCADE
+);
