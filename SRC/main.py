@@ -41,7 +41,7 @@ def authenticate(Auth: AuthRequest):
     return authenticate_User(Auth.name, Auth.pwd)
 
 @app.put("/user/update", response_model=User)
-def update_user(Update: UpdateRequest):
+def update_user(Update: UpdateUsuari):
     return update_User(Update.id, Update.name, Update.mail, Update.pwd)
 
 @app.delete("/user/delete", response_model=dict)

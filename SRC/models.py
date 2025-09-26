@@ -14,7 +14,7 @@ class AuthRequest(BaseModel):
     name: str
     pwd: str
 
-class UpdateRequest(BaseModel):
+class UpdateUsuari(BaseModel):
     id: int
     name: Optional[str] = None
     mail: Optional[str] = None
