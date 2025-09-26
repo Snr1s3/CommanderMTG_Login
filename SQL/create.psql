@@ -1,8 +1,9 @@
 CREATE DATABASE proj;
 \c proj;
-CREATE TABLE user(
+CREATE TABLE usuari(
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(50) NOT NULL UNIQUE,
+    mail VARCHAR(50) NOT NULL UNIQUE,
     hash VARCHAR(60) NOT NULL UNIQUE
 );
 CREATE TABLE commander(
@@ -13,15 +14,15 @@ CREATE TABLE partida(
 	id SERIAL PRIMARY KEY,
     winner INT
 );
-CREATE TABLE user_commander (
+CREATE TABLE usuari_commander (
     id SERIAL PRIMARY KEY,                    
-    id_user INT NOT NULL,                   
+    id_usuari INT NOT NULL,                   
     id_commander INT NOT NULL,                   
     id_partida INT NOT NULL,                   
     
-    CONSTRAINT fk_users                   
-        FOREIGN KEY (id_user)         
-        REFERENCES user (id)         
+    CONSTRAINT fk_usuari                   
+        FOREIGN KEY (id_usuari)         
+        REFERENCES usuari (id)         
         ON DELETE CASCADE,
 
     CONSTRAINT fk_commander         

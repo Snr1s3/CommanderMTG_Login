@@ -7,18 +7,46 @@ from ..models import User, AuthRequest, UpdateRequest
 import bcrypt
 
 def get_all_Users() -> List[User]:
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute(f"SELECT * FROM usuari;")
+        results = cursor.fetchall()
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        release_db_connection(conn)
+
     Users = general.select_all("User")
     return [User(**p) for p in Users]
 
 def get_User_by_id(id: int) -> User:
-    p = general.select_by_id("User", id)
-    if p:
-        return User(**p)
-    else:
-        raise HTTPException(status_code=404, detail="User not found")
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute(f"SELECT * FROM usuari WHERE id = {id};")
+        results = cursor.fetchone()
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        release_db_connection(conn)
 
 def delete_User_by_id(id: int) -> dict:
-    return general.delete_by_id("User", id)
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute(f"DELETE FROM usuari WHERE id = {id};")
+        conn.commit()
+        return {"message": f"Record with id {id} deleted from User."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        release_db_connection(conn)
 
 def create_User(name: str, mail: str, pwd: str) -> User:
     if not check_unique_name(name):
@@ -28,7 +56,7 @@ def create_User(name: str, mail: str, pwd: str) -> User:
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("""
-            INSERT INTO User (name,mail, hash)
+            INSERT INTO usuari (name,mail, hash)
             VALUES (%s, %s)
             RETURNING *;
         """, (name, mail, hash))
@@ -45,7 +73,7 @@ def check_unique_name(name: str) -> bool:
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("SELECT * FROM User WHERE name = %s;", (name,))
+        cursor.execute("SELECT * FROM usuari WHERE name = %s;", (name,))
         existing_User = cursor.fetchone()
         return existing_User is None
     except Exception as e:
@@ -58,7 +86,7 @@ def authenticate_User(name: str, pwd: str) -> User:
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("SELECT * FROM User WHERE name = %s;", (name,))
+        cursor.execute("SELECT * FROM usuari WHERE name = %s;", (name,))
         results = cursor.fetchone()
         if bcrypt.checkpw(pwd.encode('utf-8'), results['hash'].encode('utf-8')):
             return User(**results)
@@ -70,22 +98,26 @@ def authenticate_User(name: str, pwd: str) -> User:
         cursor.close()
         release_db_connection(conn)
 
-def update_User_hash(name: str, pwd: str) -> User:
+def update_User(id: int, name: str = None, mail: str = None, pwd: str = None) -> User:
     if not check_unique_name(name):
         raise HTTPException(status_code=400, detail="User name already exists")
     hash = bcrypt.hashpw(pwd.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("""
-            UPDATE User
-            SET hash = %s
-            WHERE name = %s
-            RETURNING *;
-        """, (hash, name))
+        string = "UPDATE usuari SET "
+        if name:
+            string += f"name = '{name}', "
+        if mail:
+            string += f"mail = '{mail}', "
+        if pwd:
+            string += f"hash = '{hash}', "
+        string = string[:-2] 
+        string += f" WHERE id = {id} RETURNING *;"
+        cursor.execute(string)
         updated_User = cursor.fetchone()
         conn.commit()
-        if updated_User:
+        if updated_User:    
             return User(**updated_User)
         else:
             raise HTTPException(status_code=404, detail="User not found")
@@ -94,4 +126,6 @@ def update_User_hash(name: str, pwd: str) -> User:
     finally:
         cursor.close()
         release_db_connection(conn)
+
+
         

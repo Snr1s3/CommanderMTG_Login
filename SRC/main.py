@@ -8,7 +8,7 @@ from .models import *
 
 from .client import *
 
-from .routers.user import *
+from .routers.users import *
 
 app = FastAPI()
 
@@ -24,26 +24,26 @@ app.add_middleware(
 def root():
     return "API de Turnonauta operativa"
 
-@app.get("/all_players", response_model=List[player])
-def all_players():
-    return get_all_players()
+@app.get("/all_users", response_model=List[User])
+def all_users():
+    return get_all_Users()
 
-@app.get("/player/{id}", response_model=player)
-def player_by_id(id: int):
-    return get_player_by_id(id)
+@app.get("/user/{id}", response_model=User)
+def user_by_id(id: int):
+    return get_User_by_id(id)
 
-@app.post("/player/create", response_model=player)
-def create_new_player(Auth: AuthRequest):
-    return create_player(Auth.name, Auth.pwd)
+@app.post("/user/create", response_model=User)
+def create_new_user(Auth: AuthRequest):
+    return create_User(Auth.name, Auth.pwd)
 
-@app.post("/player/authenticate/", response_model=player)
+@app.post("/user/authenticate/", response_model=User)
 def authenticate(Auth: AuthRequest):
-    return authenticate_player(Auth.name, Auth.pwd)
+    return authenticate_User(Auth.name, Auth.pwd)
 
-@app.put("/player/update", response_model=player)
-def update_player(Auth: AuthRequest):
-    return update_player_hash(Auth.name, Auth.pwd)
+@app.put("/user/update", response_model=User)
+def update_user(Update: UpdateRequest):
+    return update_User(Update.id, Update.name, Update.mail, Update.pwd)
 
-@app.delete("/player/delete", response_model=dict)
-def delete_player(id: int):
-    return delete_player_by_id(id)
+@app.delete("/user/delete", response_model=dict)
+def delete_user(id: int):
+    return delete_User_by_id(id)
