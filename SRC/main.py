@@ -33,16 +33,16 @@ def user_by_id(id: int):
     return get_User_by_id(id)
 
 @app.post("/user/create", response_model=User)
-def create_new_user(Auth: AuthRequest):
-    return create_User(Auth.name, Auth.pwd)
+def create_new_user(Create: CreateUser):
+    return create_User(Create.name, Create.mail, Create.hash)
 
 @app.post("/user/authenticate/", response_model=User)
 def authenticate(Auth: AuthRequest):
-    return authenticate_User(Auth.name, Auth.pwd)
+    return authenticate_User(Auth.name, Auth.hash)
 
 @app.put("/user/update", response_model=User)
 def update_user(Update: UpdateUsuari):
-    return update_User(Update.id, Update.name, Update.mail, Update.pwd)
+    return update_User(Update.id, Update.name, Update.mail, Update.hash)
 
 @app.delete("/user/delete", response_model=dict)
 def delete_user(id: int):

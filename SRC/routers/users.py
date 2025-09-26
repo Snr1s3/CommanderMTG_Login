@@ -3,7 +3,7 @@ from ..client import get_db_connection, release_db_connection
 from psycopg2.extras import RealDictCursor
 from typing import List
 from typing import List
-from ..models import User, AuthRequest, UpdateRequest
+from ..models import User, AuthRequest, UpdateUsuari
 import bcrypt
 
 def get_all_Users() -> List[User]:
@@ -18,9 +18,6 @@ def get_all_Users() -> List[User]:
     finally:
         cursor.close()
         release_db_connection(conn)
-
-    Users = general.select_all("User")
-    return [User(**p) for p in Users]
 
 def get_User_by_id(id: int) -> User:
     conn = get_db_connection()
@@ -48,16 +45,16 @@ def delete_User_by_id(id: int) -> dict:
         cursor.close()
         release_db_connection(conn)
 
-def create_User(name: str, mail: str, pwd: str) -> User:
+def create_User(name: str, mail: str, hash: str) -> User:
     if not check_unique_name(name):
         raise HTTPException(status_code=400, detail="User name already exists")
-    hash = bcrypt.hashpw(pwd.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    hash = bcrypt.hashpw(hash.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("""
             INSERT INTO usuari (name,mail, hash)
-            VALUES (%s, %s)
+            VALUES (%s,%s, %s)
             RETURNING *;
         """, (name, mail, hash))
         new_User = cursor.fetchone()
@@ -82,13 +79,13 @@ def check_unique_name(name: str) -> bool:
         cursor.close()
         release_db_connection(conn)
 
-def authenticate_User(name: str, pwd: str) -> User:
+def authenticate_User(name: str, hash: str) -> User:
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("SELECT * FROM usuari WHERE name = %s;", (name,))
         results = cursor.fetchone()
-        if bcrypt.checkpw(pwd.encode('utf-8'), results['hash'].encode('utf-8')):
+        if bcrypt.checkpw(hash.encode('utf-8'), results['hash'].encode('utf-8')):
             return User(**results)
         else:
             raise HTTPException(status_code=400, detail="Invalid credentials")
@@ -98,10 +95,10 @@ def authenticate_User(name: str, pwd: str) -> User:
         cursor.close()
         release_db_connection(conn)
 
-def update_User(id: int, name: str = None, mail: str = None, pwd: str = None) -> User:
+def update_User(id: int, name: str = None, mail: str = None, hash: str = None) -> User:
     if not check_unique_name(name):
         raise HTTPException(status_code=400, detail="User name already exists")
-    hash = bcrypt.hashpw(pwd.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    hash = bcrypt.hashpw(hash.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
@@ -110,7 +107,7 @@ def update_User(id: int, name: str = None, mail: str = None, pwd: str = None) ->
             string += f"name = '{name}', "
         if mail:
             string += f"mail = '{mail}', "
-        if pwd:
+        if hash:
             string += f"hash = '{hash}', "
         string = string[:-2] 
         string += f" WHERE id = {id} RETURNING *;"
