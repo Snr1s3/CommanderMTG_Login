@@ -23,7 +23,7 @@ def get_User_by_id(id: int) -> User:
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute(f"SELECT * FROM usuari WHERE id = {id};")
+        cursor.execute("SELECT * FROM usuari WHERE id = %s;", (id,))
         results = cursor.fetchone()
         return results
     except Exception as e:
@@ -36,7 +36,7 @@ def delete_User_by_id(id: int) -> dict:
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute(f"DELETE FROM usuari WHERE id = {id};")
+        cursor.execute("DELETE FROM usuari WHERE id = %s;", (id,))
         conn.commit()
         return {"message": f"Record with id {id} deleted from User."}
     except Exception as e:
