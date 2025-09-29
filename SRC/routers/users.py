@@ -1,26 +1,11 @@
 from fastapi import HTTPException
+from SRC.routers.checks import check_fields_unique, is_strong_password, is_valid_email
 from ..client import get_db_connection, release_db_connection
 from psycopg2.extras import RealDictCursor
 from typing import List
 from typing import List
-from ..models import User, AuthRequest, UpdateUsuari
+from ..models import User
 import bcrypt
-import re
-
-def is_valid_email(email: str) -> bool:
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(pattern, email) is not None
-
-def is_strong_password(password: str) -> bool:
-    if len(password) < 8:
-        return False
-    
-    has_upper = re.search(r'[A-Z]', password) is not None
-    has_lower = re.search(r'[a-z]', password) is not None
-    has_digit = re.search(r'\d', password) is not None
-    has_special = re.search(r'[!@#$%^&*()_+\-=\[\]{};:"\\|,.<>\?]', password) is not None
-    
-    return has_upper and has_lower and has_digit and has_special
 
 def get_all_Users() -> List[User]:
     conn = get_db_connection()
@@ -44,22 +29,6 @@ def get_User_by_id(id: int) -> User:
         if results is None:
             raise HTTPException(status_code=404, detail=f"User with id {id} not found")
         return User(**results)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        release_db_connection(conn)
-
-def delete_User_by_id(id: int) -> dict:
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-    try:
-        cursor.execute("DELETE FROM usuari WHERE id = %s;", (id,))
-        rows_affected = cursor.rowcount
-        conn.commit()
-        if rows_affected == 0:
-            raise HTTPException(status_code=404, detail=f"User with id {id} not found")
-        return {"message": f"Record with id {id} deleted from User."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -91,32 +60,6 @@ def create_User(name: str, mail: str, hash: str) -> User:
         return User(**new_User)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        cursor.close()
-        release_db_connection(conn)
-
-def check_fields_unique(name: str = None, mail: str = None, hash: str = None) -> bool:
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-    try:
-        if name:
-            cursor.execute("SELECT id FROM usuari WHERE name = %s;", (name,))
-            if cursor.fetchone() is not None:
-                return False
-                
-        if mail:
-            cursor.execute("SELECT id FROM usuari WHERE mail = %s;", (mail,))
-            if cursor.fetchone() is not None:
-                return False
-                
-        if hash:
-            cursor.execute("SELECT id FROM usuari WHERE hash = %s;", (hash,))
-            if cursor.fetchone() is not None:
-                return False
-        
-        return True
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
         release_db_connection(conn)
@@ -188,6 +131,22 @@ def update_User(id: int, name: str = None, mail: str = None, hash: str = None) -
             return User(**updated_User)
         else:
             raise HTTPException(status_code=404, detail="User not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        release_db_connection(conn)
+
+def delete_User_by_id(id: int) -> dict:
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("DELETE FROM usuari WHERE id = %s;", (id,))
+        rows_affected = cursor.rowcount
+        conn.commit()
+        if rows_affected == 0:
+            raise HTTPException(status_code=404, detail=f"User with id {id} not found")
+        return {"message": f"Record with id {id} deleted from User."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
