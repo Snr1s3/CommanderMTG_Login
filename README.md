@@ -1,5 +1,9 @@
 # Login Microservice
 
+This service handles CRUD operations and authentication for users.
+
+**⚠️ Requirements:** PostgreSQL database is required.
+
 ## Configuration
 
 Create a `settings.py` file in the `SRC/` directory with the following database configuration:
@@ -13,6 +17,20 @@ db_config = {
     'port': 5432             # Database port (5432 default)
 }
 ```
+
+## Database Schema
+The user table must have these required fields and name:
+
+```sql
+CREATE TABLE usuari(
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    mail VARCHAR(50) NOT NULL UNIQUE,
+    hash VARCHAR(60) NOT NULL UNIQUE
+);
+```
+
+**Note:** The table can have additional fields, but the microservice will only use the fields listed above.
 
 ## API Endpoints
 
