@@ -46,17 +46,19 @@ def delete_User_by_id(id: int) -> dict:
         release_db_connection(conn)
 
 def create_User(name: str, mail: str, hash: str) -> User:
-    if not check_unique_name(name):
-        raise HTTPException(status_code=400, detail="User name already exists")
-    hash = bcrypt.hashpw(hash.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    if not check_fields_unique(name=name, mail=mail):
+        raise HTTPException(status_code=400, detail="Username or email already exists")
+    
+    hashed_password = bcrypt.hashpw(hash.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("""
-            INSERT INTO usuari (name,mail, hash)
-            VALUES (%s,%s, %s)
+            INSERT INTO usuari (name, mail, hash)
+            VALUES (%s, %s, %s)
             RETURNING *;
-        """, (name, mail, hash))
+        """, (name, mail, hashed_password))
         new_User = cursor.fetchone()
         conn.commit()
         return User(**new_User)
@@ -66,13 +68,26 @@ def create_User(name: str, mail: str, hash: str) -> User:
         cursor.close()
         release_db_connection(conn)
 
-def check_unique_name(name: str) -> bool:
+def check_fields_unique(name: str = None, mail: str = None, hash: str = None) -> bool:
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("SELECT * FROM usuari WHERE name = %s;", (name,))
-        existing_User = cursor.fetchone()
-        return existing_User is None
+        if name:
+            cursor.execute("SELECT id FROM usuari WHERE name = %s;", (name,))
+            if cursor.fetchone() is not None:
+                return False
+                
+        if mail:
+            cursor.execute("SELECT id FROM usuari WHERE mail = %s;", (mail,))
+            if cursor.fetchone() is not None:
+                return False
+                
+        if hash:
+            cursor.execute("SELECT id FROM usuari WHERE hash = %s;", (hash,))
+            if cursor.fetchone() is not None:
+                return False
+        
+        return True
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -96,24 +111,46 @@ def authenticate_User(name: str, hash: str) -> User:
         release_db_connection(conn)
 
 def update_User(id: int, name: str = None, mail: str = None, hash: str = None) -> User:
-    if not check_unique_name(name):
-        raise HTTPException(status_code=400, detail="User name already exists")
-    hash = bcrypt.hashpw(hash.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    fields_to_check = {}
+    if name:
+        fields_to_check['name'] = name
+    if mail:
+        fields_to_check['mail'] = mail
+    
+    if fields_to_check and not check_fields_unique(**fields_to_check):
+        raise HTTPException(status_code=400, detail="Username or email already exists")
+    
+    hashed_password = None
+    if hash:
+        hashed_password = bcrypt.hashpw(hash.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        string = "UPDATE usuari SET "
+        update_fields = []
+        values = []
+        
         if name:
-            string += f"name = '{name}', "
+            update_fields.append("name = %s")
+            values.append(name)
         if mail:
-            string += f"mail = '{mail}', "
-        if hash:
-            string += f"hash = '{hash}', "
-        string = string[:-2] 
-        string += f" WHERE id = {id} RETURNING *;"
-        cursor.execute(string)
+            update_fields.append("mail = %s") 
+            values.append(mail)
+        if hashed_password:
+            update_fields.append("hash = %s")
+            values.append(hashed_password)
+            
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields provided for update")
+            
+        values.append(id)  # Add id for WHERE clause
+        
+        query = f"UPDATE usuari SET {', '.join(update_fields)} WHERE id = %s RETURNING *;"
+        cursor.execute(query, values)
+        
         updated_User = cursor.fetchone()
         conn.commit()
+        
         if updated_User:    
             return User(**updated_User)
         else:
