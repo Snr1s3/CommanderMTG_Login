@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Docker
+.dockerignore
+Dockerfile
+
+# Documentation
+README.md
+
+# SQL files (not needed since DB is external)
+SQL/
+
+# Logs
+*.log

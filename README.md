@@ -122,3 +122,82 @@ pip install -r requirements.txt
 - **Interactive Documentation**: http://localhost:8443/docs
 - **Alternative Documentation**: http://localhost:8443/redoc
 
+## Docker Deployment
+
+### Prerequisites
+- Docker installed on your system
+- PostgreSQL database running (can be in a container or host machine)
+
+### Building the Docker Image
+```bash
+# Build the API Docker image
+sudo docker build -t login-api .
+```
+
+### Running with Docker
+
+#### Option 1: Connect to existing PostgreSQL database
+```bash
+# Make sure your PostgreSQL database is running first
+sudo docker start postgres-db  # if using Docker for database
+
+# Run the API container
+sudo docker run -d \
+  --name login-api-container \
+  -p 8443:8443 \
+  -e DB_HOST=172.17.0.1 \
+  -e DB_PORT=8888 \
+  -e DB_USER=postgres \
+  -e DB_PASSWORD=your_password \
+  -e DB_NAME=proj \
+  login-api
+```
+
+#### Option 2: Using host database
+```bash
+# If database is running on host machine
+sudo docker run -d \
+  --name login-api-container \
+  -p 8443:8443 \
+  -e DB_HOST=172.17.0.1 \
+  -e DB_PORT=5432 \
+  -e DB_USER=postgres \
+  -e DB_PASSWORD=your_password \
+  -e DB_NAME=proj \
+  login-api
+```
+
+### Docker Management Commands
+```bash
+# Check running containers
+sudo docker ps
+
+# View API logs
+sudo docker logs login-api-container
+
+# Stop the container
+sudo docker stop login-api-container
+
+# Start the container
+sudo docker start login-api-container
+
+# Remove the container
+sudo docker rm login-api-container
+
+# Remove the image
+sudo docker rmi login-api
+```
+
+### Environment Variables
+The Docker container supports these environment variables:
+- `DB_HOST` - Database host (default: localhost)
+- `DB_PORT` - Database port (default: 8888)  
+- `DB_USER` - Database username (default: postgres)
+- `DB_PASSWORD` - Database password (default: root)
+- `DB_NAME` - Database name (default: proj)
+
+### Docker Network Notes
+- Use `172.17.0.1` as DB_HOST to connect to services on the Docker host
+- Make sure the PostgreSQL database accepts connections from Docker containers
+- Port 8443 will be exposed for API access
+
