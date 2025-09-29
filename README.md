@@ -78,11 +78,29 @@ db_config = {
   curl -X DELETE http://localhost:8443/user/delete?id=1
   ```
 
-## Interactive Documentation
+## Usage
 
-Access the auto-generated API documentation at:
-- **Swagger UI**: http://localhost:8443/docs
-- **ReDoc**: http://localhost:8443/redoc
+### Setup and Installation
+```bash
+# Create virtual environment
+python3 -m venv venv
 
+# Activate virtual environment
+source venv/bin/activate
 
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Running the Application
+```bash
+# Start the FastAPI server
+# Make sure that the database is running
+./venv/bin/uvicorn SRC.main:app --reload --host 0.0.0.0 --port 8443
+```
+
+### Access the API
+- **API Base URL**: http://localhost:8443
+- **Interactive Documentation**: http://localhost:8443/docs
+- **Alternative Documentation**: http://localhost:8443/redoc
 
