@@ -43,3 +43,26 @@ def check_fields_unique(name: str = None, mail: str = None, hash: str = None) ->
     finally:
         cursor.close()
         release_db_connection(conn)
+
+def validate_id(id: int):
+    if not isinstance(id, int):
+        raise HTTPException(status_code=400, detail="ID must be an integer")
+    if id <= 0:
+        raise HTTPException(status_code=400, detail="ID must be a positive integer")
+
+def check_id(database: str, id: int) -> bool:
+    validate_id(id)
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        query = f"SELECT 1 FROM {database} WHERE id = %s LIMIT 1;"
+        cursor.execute(query, (id,))
+        result = cursor.fetchone()
+        return result is not None
+    except Exception as e:
+        print(f"Error checking ID {id} in {database}: {e}")
+        return False
+    finally:
+        cursor.close()
+        release_db_connection(conn)

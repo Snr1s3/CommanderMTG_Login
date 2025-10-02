@@ -3,12 +3,9 @@ from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from datetime import date
-
-from .models import *
-
 from .client import *
-
-from .routers.users import *
+from .services.usuaris import *
+from SRC.models import usuaris
 
 app = FastAPI()
 
@@ -20,30 +17,9 @@ app.add_middleware(
     allow_headers=["*"],  
 )
 
+
+app.include_router(usuaris.router)
 @app.get("/", response_model=str)
 def root():
     return "API de Turnonauta operativa"
 
-@app.get("/all_users", response_model=List[User])
-def all_users():
-    return get_all_Users()
-
-@app.get("/user/{id}", response_model=User)
-def user_by_id(id: int):
-    return get_User_by_id(id)
-
-@app.post("/user/create", response_model=User)
-def create_new_user(Create: CreateUser):
-    return create_User(Create.name, Create.mail, Create.hash)
-
-@app.post("/user/authenticate/", response_model=User)
-def authenticate(Auth: AuthRequest):
-    return authenticate_User(Auth.name, Auth.hash)
-
-@app.put("/user/update", response_model=User)
-def update_user(Update: UpdateUsuari):
-    return update_User(Update.id, Update.name, Update.mail, Update.hash)
-
-@app.delete("/user/delete", response_model=dict)
-def delete_user(id: int):
-    return delete_User_by_id(id)

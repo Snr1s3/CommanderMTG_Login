@@ -24,8 +24,8 @@ The user table must have these required fields and name:
 ```sql
 CREATE TABLE usuari(
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
-    mail VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(60) NOT NULL UNIQUE,
+    mail VARCHAR(60) NOT NULL UNIQUE,
     hash VARCHAR(60) NOT NULL UNIQUE
 );
 ```
