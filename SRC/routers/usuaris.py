@@ -10,41 +10,59 @@ router = APIRouter(
     tags=["usuaris"],
     responses={404: {"description": "Not found"}}
 )
-@router.get("/all_users", response_model=List[Usuari])
+@router.get("/", response_model=List[Usuari])
 async def all_users(
         usuari_service: UsuariService = Depends(UsuariService)
     ):
     return usuari_service.get_all_Usuaris()
 
-@router.get("/user/{id}", response_model=Usuari)
+@router.get("/{id}", response_model=Usuari)
 async def user_by_id(
         id: int,
         usuari_service: UsuariService = Depends(UsuariService)
     ):
     return usuari_service.get_Usuari_by_id(id)
 
-@router.post("/user/create", response_model=Usuari)
+@router.post("/", response_model=Usuari)
 async def create_new_user(
         Create: CreateUsuari,
         usuari_service: UsuariService = Depends(UsuariService)
     ):
     return usuari_service.create_Usuari(Create.name, Create.mail, Create.hash)
 
-@router.post("/user/authenticate/", response_model=Usuari)
+@router.post("/authenticate/", response_model=Usuari)
 async def authenticate(
         Auth: AuthRequest,
         usuari_service: UsuariService = Depends(UsuariService)
     ):
     return usuari_service.authenticate_Usuari(Auth.name, Auth.hash)
 
-@router.put("/user/update", response_model=Usuari)
-async def update_user(
-        Update: UpdateUsuari,
+@router.put("/{id}/name", response_model=Usuari)
+async def update_user_name(
+        id: int,
+        update_data: UpdateUsuariName,
         usuari_service: UsuariService = Depends(UsuariService)
     ):
-    return usuari_service.update_Usuari(Update.id, Update.name, Update.mail, Update.hash)
+    return usuari_service.update_Usuari_name(id, update_data.name)
 
-@router.delete("/user/delete", response_model=dict)
+@router.put("/{id}/mail", response_model=Usuari)
+async def update_user_mail(
+        id: int,
+        update_data: UpdateUsuariMail,
+        usuari_service: UsuariService = Depends(UsuariService)
+    ):
+    return usuari_service.update_Usuari_mail(id, update_data.mail)
+
+@router.put("/{id}/password", response_model=Usuari)
+async def update_user_password(
+        id: int,
+        update_data: UpdateUsuariPassword,
+        usuari_service: UsuariService = Depends(UsuariService)
+    ):
+    return usuari_service.update_Usuari_password(id, update_data.hash)
+
+
+@router.delete("{id}", response_model=dict)
 async def delete_user(
         id: int,
         usuari_service: UsuariService = Depends(UsuariService)

@@ -14,11 +14,16 @@ class CreateUsuari(BaseModel):
     mail : str
     hash : str
 
-class UpdateUsuari(BaseModel):
-    id: int
-    name: Optional[str] = None
-    mail: Optional[str] = None
-    hash: Optional[str] = None
+
 class AuthRequest(BaseModel):
     name: str
+    hash: str
+
+class UpdateUsuariName(BaseModel):
+    name: str
+
+class UpdateUsuariMail(BaseModel):
+    mail: str
+
+class UpdateUsuariPassword(BaseModel):
     hash: str

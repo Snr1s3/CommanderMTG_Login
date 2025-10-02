@@ -1,12 +1,8 @@
-from fastapi import FastAPI, HTTPException, Depends
-from typing import List
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from datetime import date
 from .client import *
 from .services.usuaris import *
-from SRC.models import usuaris
-
+from SRC.routers import usuaris
 app = FastAPI()
 
 app.add_middleware(
