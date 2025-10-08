@@ -62,7 +62,7 @@ async def update_user_password(
     return usuari_service.update_Usuari_password(id, update_data.hash)
 
 
-@router.delete("{id}", response_model=dict)
+@router.delete("/{id}", response_model=dict)
 async def delete_user(
         id: int,
         usuari_service: UsuariService = Depends(UsuariService)
