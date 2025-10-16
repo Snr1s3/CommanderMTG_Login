@@ -37,29 +37,13 @@ async def authenticate(
     ):
     return usuari_service.authenticate_Usuari(Auth.name, Auth.hash)
 
-@router.put("/{id}/name", response_model=Usuari)
+@router.put("/{id}", response_model=Usuari)
 async def update_user_name(
         id: int,
-        update_data: UpdateUsuariName,
+        update_data: UpdateUsuariComplete,
         usuari_service: UsuariService = Depends(UsuariService)
     ):
-    return usuari_service.update_Usuari_name(id, update_data.name)
-
-@router.put("/{id}/mail", response_model=Usuari)
-async def update_user_mail(
-        id: int,
-        update_data: UpdateUsuariMail,
-        usuari_service: UsuariService = Depends(UsuariService)
-    ):
-    return usuari_service.update_Usuari_mail(id, update_data.mail)
-
-@router.put("/{id}/password", response_model=Usuari)
-async def update_user_password(
-        id: int,
-        update_data: UpdateUsuariPassword,
-        usuari_service: UsuariService = Depends(UsuariService)
-    ):
-    return usuari_service.update_Usuari_password(id, update_data.hash)
+    return usuari_service.update_Usuari(id, update_data)
 
 
 @router.delete("/{id}", response_model=dict)

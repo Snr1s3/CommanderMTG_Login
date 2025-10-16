@@ -124,111 +124,88 @@ class UsuariService:
             cursor.close()
             release_db_connection(conn)
 
-    def update_Usuari_name(self, id: int, name: str) -> Usuari:
-        if not name or not name.strip():
-            raise HTTPException(status_code=400, detail="Username cannot be empty")
+def update_Usuari(self, id: int, update_data) -> Usuari:
+    if id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+    
+    name = getattr(update_data, 'name', None)
+    mail = getattr(update_data, 'mail', None)
+    moxfield = getattr(update_data, 'moxfield', None)
+    archideckt = getattr(update_data, 'archideckt', None)
+    hash = getattr(update_data, 'hash', None)
+    
+    if name is not None and (not name.strip() or len(name.strip()) > 255):
+        raise HTTPException(status_code=400, detail="Invalid username")
+    if mail is not None and (not mail.strip() or len(mail.strip()) > 255):
+        raise HTTPException(status_code=400, detail="Invalid email")
+    if hash is not None and not hash.strip():
+        raise HTTPException(status_code=400, detail="Password cannot be empty")
         
-        if len(name.strip()) > 255:
-            raise HTTPException(status_code=400, detail="Username too long")
-        
-        if not check_fields_unique(name=name.strip()):
-            raise HTTPException(status_code=409, detail="Username already exists")
-        
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        try:
-            cursor.execute(
-                "UPDATE usuari SET name = %s WHERE id = %s RETURNING *;",
-                (name.strip(), id)
-            )
-            
-            updated_Usuari = cursor.fetchone()
-            conn.commit()
-            
-            if updated_Usuari:    
-                return Usuari(**updated_Usuari)
-            else:
-                raise HTTPException(status_code=404, detail="User not found")
-        except Exception as e:
-            conn.rollback()
-            error_str = str(e).lower()
-            if 'unique constraint' in error_str or 'duplicate key' in error_str:
-                raise HTTPException(status_code=409, detail="Username already exists")
-            else:
-                raise HTTPException(status_code=500, detail="Failed to update username")
-        finally:
-            cursor.close()
-            release_db_connection(conn)
-
-    def update_Usuari_mail(self, id: int, mail: str) -> Usuari:
-        if not mail or not mail.strip():
-            raise HTTPException(status_code=400, detail="Email cannot be empty")
-        
-        if len(mail.strip()) > 255:
-            raise HTTPException(status_code=400, detail="Email too long")
-        
-        if not is_valid_email(mail):
-            raise HTTPException(status_code=400, detail="Invalid email format")
-        
-        if not check_fields_unique(mail=mail.strip()):
-            raise HTTPException(status_code=409, detail="Email already exists")
-        
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        try:
-            cursor.execute(
-                "UPDATE usuari SET mail = %s WHERE id = %s RETURNING *;",
-                (mail.strip(), id)
-            )
-            
-            updated_Usuari = cursor.fetchone()
-            conn.commit()
-            
-            if updated_Usuari:    
-                return Usuari(**updated_Usuari)
-            else:
-                raise HTTPException(status_code=404, detail="User not found")
-        except Exception as e:
-            conn.rollback()
-            error_str = str(e).lower()
-            if 'unique constraint' in error_str or 'duplicate key' in error_str:
-                raise HTTPException(status_code=409, detail="Email already exists")
-            else:
-                raise HTTPException(status_code=500, detail="Failed to update email")
-        finally:
-            cursor.close()
-            release_db_connection(conn)
-
-    def update_Usuari_password(self, id: int, hash: str) -> Usuari:
-        if not hash or not hash.strip():
-            raise HTTPException(status_code=400, detail="Password cannot be empty")
-        
-        if not is_strong_password(hash):
-            raise HTTPException(status_code=400, detail="Password must be at least 8 characters long and contain uppercase, lowercase, digit, and special character")
-        
+    if mail and not is_valid_email(mail):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+    
+    if hash and not is_strong_password(hash):
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long and contain uppercase, lowercase, digit, and special character")
+    
+    # Check uniqueness for fields being updated
+    fields_to_check = {}
+    if name:
+        fields_to_check['name'] = name.strip()
+    if mail:
+        fields_to_check['mail'] = mail.strip()
+    
+    if fields_to_check and not check_fields_unique(**fields_to_check):
+        raise HTTPException(status_code=409, detail="Username or email already exists")
+    
+    # Hash password if provided
+    hashed_password = None
+    if hash:
         try:
             hashed_password = bcrypt.hashpw(hash.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         except Exception:
-            raise HTTPException(status_code=500, detail="Failed to encrypt password")
+            raise HTTPException(status_code=500, detail="Password encryption failed")
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        update_fields = []
+        values = []
         
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        try:
-            cursor.execute(
-                "UPDATE usuari SET hash = %s WHERE id = %s RETURNING *;",
-                (hashed_password, id)
-            )
+        if name:
+            update_fields.append("name = %s")
+            values.append(name.strip())
+        if mail:
+            update_fields.append("mail = %s") 
+            values.append(mail.strip())
+        if hashed_password:
+            update_fields.append("hash = %s")
+            values.append(hashed_password)
             
-            updated_Usuari = cursor.fetchone()
-            conn.commit()
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields provided for update")
             
-            if updated_Usuari:    
-                return Usuari(**updated_Usuari)
-            else:
-                raise HTTPException(status_code=404, detail="User not found")
-        except Exception as e:
-            conn.rollback()
-            raise HTTPException(status_code=500, detail="Failed to update password")
-        finally:
-            cursor.close()
-            release_db_connection(conn)
+        values.append(id)
+        
+        query = f"UPDATE usuari SET {', '.join(update_fields)} WHERE id = %s RETURNING *;"
+        cursor.execute(query, values)
+        
+        updated_Usuari = cursor.fetchone()
+        conn.commit()
+        
+        if updated_Usuari:    
+            return Usuari(**updated_Usuari)
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        error_str = str(e).lower()
+        if 'unique constraint' in error_str or 'duplicate key' in error_str:
+            raise HTTPException(status_code=409, detail="Username or email already exists")
+        else:
+            raise HTTPException(status_code=500, detail="Failed to update user")
+    finally:
+        cursor.close()
+        release_db_connection(conn)
