@@ -20,3 +20,4 @@ class AuthRequest(BaseModel):
 class UpdateUsuariComplete(BaseModel):
     name: Optional[str] = Field(None, description="User's display name (3-50 characters)")
     mail: Optional[str] = Field(None, description="Valid email address")
+    hash: str = Field(..., description="Password hash (minimum 8 characters)")
