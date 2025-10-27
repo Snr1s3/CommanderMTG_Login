@@ -130,8 +130,6 @@ def update_Usuari(self, id: int, update_data) -> Usuari:
     
     name = getattr(update_data, 'name', None)
     mail = getattr(update_data, 'mail', None)
-    moxfield = getattr(update_data, 'moxfield', None)
-    archideckt = getattr(update_data, 'archideckt', None)
     hash = getattr(update_data, 'hash', None)
     
     if name is not None and (not name.strip() or len(name.strip()) > 255):
